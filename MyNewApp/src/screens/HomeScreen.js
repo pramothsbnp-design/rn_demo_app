@@ -21,6 +21,9 @@ const HomeScreen = ({ navigation }) => {
   const [sortBy, setSortBy] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [modalVisible, setModalVisible] = useState(false);
+  const [lastDoc, setLastDoc] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   // Logout function
   const handleLogout = async () => {
@@ -33,9 +36,12 @@ const HomeScreen = ({ navigation }) => {
 
   // Fetch products
   const loadProducts = async () => {
+    setLoading(true);
     try {
-      const data = await fetchProducts();
+      const data = await fetchProducts(15);
       setProducts(data.products);
+      setLastDoc(data.lastDoc);
+      setHasMore(data.products.length === 15);
 
       // If no products, add sample data
       if (data.products.length === 0) {
@@ -44,6 +50,27 @@ const HomeScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.log('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load more products
+  const loadMoreProducts = async () => {
+    if (!hasMore || loading) return;
+    setLoading(true);
+    try {
+      const data = await fetchProducts(15, lastDoc);
+      // Add a 0.5 second delay before showing new items
+      setTimeout(() => {
+        setProducts(prev => [...prev, ...data.products]);
+        setLastDoc(data.lastDoc);
+        setHasMore(data.products.length === 15);
+        setLoading(false);
+      }, 500);
+    } catch (error) {
+      console.log('Error fetching more products:', error);
+      setLoading(false);
     }
   };
 
@@ -64,6 +91,13 @@ const HomeScreen = ({ navigation }) => {
     loadProducts();
   }, []);
 
+  // Reload when category changes
+  useEffect(() => {
+    if (selectedCategory !== 'All') {
+      loadProducts();
+    }
+  }, [selectedCategory]);
+
   // Add sample data if collection is empty
   const addSampleDataIfEmpty = async () => {
     try {
@@ -74,7 +108,7 @@ const HomeScreen = ({ navigation }) => {
           price: 999,
           thumbnail: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400',
           description: 'Latest iPhone with advanced features',
-          category: 'Mobiles'
+          category: 'Smartphones'
         },
         {
           id: 2,
@@ -112,7 +146,7 @@ const HomeScreen = ({ navigation }) => {
   const filteredProducts = useMemo(() => {
     let filtered = products;
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(p => p.category === selectedCategory);
+      filtered = filtered.filter(item => item.category === selectedCategory);
     }
     if (sortBy === 'asc') {
       filtered = [...filtered].sort((a, b) => a.price - b.price);
@@ -120,7 +154,7 @@ const HomeScreen = ({ navigation }) => {
       filtered = [...filtered].sort((a, b) => b.price - a.price);
     }
     return filtered;
-  }, [products, selectedCategory, sortBy]);
+  }, [products, sortBy, selectedCategory]);
 
   const styles = StyleSheet.create({
     container: {
@@ -231,6 +265,14 @@ const HomeScreen = ({ navigation }) => {
       color: theme.colors.text,
       fontWeight: 'bold',
     },
+    loadingContainer: {
+      padding: 20,
+      alignItems: 'center',
+    },
+    loadingText: {
+      color: theme.colors.text,
+      fontSize: 16,
+    },
   });
 
   return (
@@ -254,6 +296,9 @@ const HomeScreen = ({ navigation }) => {
         keyExtractor={item => item.docId}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
+        onEndReached={loadMoreProducts}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loading ? <View style={styles.loadingContainer}><Text style={styles.loadingText}>Loading...</Text></View> : null}
       />
       <Modal
         animationType="slide"
@@ -267,7 +312,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.filterContainer}>
               <View style={styles.filterSection}>
                 <Text style={styles.filterLabel}>Category:</Text>
-                {['All', 'Mobiles', 'laptops', 'mobile accessories', 'home appliances'].map(category => (
+                {['All', 'Smartphones', 'laptops', 'mobile accessories', 'home appliances'].map(category => (
                   <TouchableOpacity
                     key={category}
                     onPress={() => setSelectedCategory(category)}
