@@ -264,11 +264,34 @@ const HomeScreen = ({ navigation }) => {
       color: theme.colors.text,
       fontSize: 14,
     },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'flex-end',
+      backgroundColor: theme.dark ? '#2A3F52' : '#FFF',
+      paddingTop: spacing.md,
+      paddingBottom: spacing.lg,
+      borderTopWidth: 1,
+      borderTopColor: theme.dark ? '#3A4B5C' : '#E0E6ED',
+      paddingHorizontal: spacing.md,
+    },
+    footerTab: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: spacing.md,
+      flex: 1,
+    },
+    footerLabel: {
+      fontSize: 12,
+      fontWeight: '600',
+      marginTop: spacing.xs,
+      color: theme.dark ? '#A8B5C2' : '#666',
+    },
   });
 
   // Main render function
   return (
-    <View style={globalStyles.container}>
+    <View style={[globalStyles.container, { paddingBottom: 0 }]}>
       {/* In-app notification banner */}
       {notification.visible && (
         <NotificationBanner
@@ -314,6 +337,37 @@ const HomeScreen = ({ navigation }) => {
         contentContainerStyle={{ paddingHorizontal: spacing.md }}
         ListFooterComponent={loading ? <View style={globalStyles.loaderContainer}><Text style={globalStyles.body}>Loading...</Text></View> : null}
       />
+      {/* Footer Navigation */}
+      <View style={localStyles.footer}>
+        <TouchableOpacity
+          style={localStyles.footerTab}
+          onPress={() => {}}
+        >
+          <Ionicons name="home" size={24} color={theme.colors.primary} />
+          <Text style={[localStyles.footerLabel, { color: theme.colors.primary }]}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={localStyles.footerTab}
+          onPress={() => navigation.navigate('Search') || console.log('Search')}
+        >
+          <Ionicons name="search" size={24} color={theme.dark ? '#A8B5C2' : '#999'} />
+          <Text style={[localStyles.footerLabel, { color: theme.dark ? '#A8B5C2' : '#999' }]}>Search</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={localStyles.footerTab}
+          onPress={() => navigation.navigate('Saved') || console.log('Saved')}
+        >
+          <Ionicons name="bookmark" size={24} color={theme.dark ? '#A8B5C2' : '#999'} />
+          <Text style={[localStyles.footerLabel, { color: theme.dark ? '#A8B5C2' : '#999' }]}>Saved</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={localStyles.footerTab}
+          onPress={() => navigation.navigate('CompleteProfile')}
+        >
+          <Ionicons name="person" size={24} color={theme.dark ? '#A8B5C2' : '#999'} />
+          <Text style={[localStyles.footerLabel, { color: theme.dark ? '#A8B5C2' : '#999' }]}>Profile</Text>
+        </TouchableOpacity>
+      </View>
       {/* Filter modal */}
       <Modal
         animationType="slide"

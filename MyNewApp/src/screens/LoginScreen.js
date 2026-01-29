@@ -51,26 +51,26 @@ const LoginScreen = ({ navigation }) => {
 
   // Handle Google Sign-In response
   useEffect(() => {
-    console.log('Google Auth Response:', response);
+    // console.log('Google Auth Response:', response);
     if (response?.type === 'success') {
-      console.log('Google Sign-In successful, processing response...');
+      // console.log('Google Sign-In successful, processing response...');
       handleGoogleSignInResponse(response);
     } else if (response?.type === 'error') {
-      console.log('Google Sign-In error:', response.params);
+      // console.log('Google Sign-In error:', response.params);
       Alert.alert('Error', 'Google Sign-In failed: ' + response.params?.error);
       setLoading(false);
     }
   }, [response]);
 
   useEffect(() => {
-    console.log('Google Auth Request ready:', !!request);
+    // console.log('Google Auth Request ready:', !!request);
   }, [request]);
 
   /**
    * Handle Firebase Email/Password Login
    */
   const handleLogin = async () => {
-    console.log('handleLogin called with email:', email);
+    // console.log('handleLogin called with email:', email);
     if (!email || !password) {
       Alert.alert('Error', 'Please enter email and password');
       return;
@@ -78,9 +78,9 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      console.log('Attempting Firebase email/password login...');
+      // console.log('Attempting Firebase email/password login...');
       const result = await signInWithEmailAndPassword(auth, email.trim(), password);
-      console.log('Email login successful, user:', result.user?.uid);
+      // console.log('Email login successful, user:', result.user?.uid);
       // Navigation will be handled automatically by AppNavigator when auth state changes
     } catch (error) {
       console.error('Email login error:', error);
@@ -94,18 +94,18 @@ const LoginScreen = ({ navigation }) => {
    * Handle Google Sign-In Response
    */
   const handleGoogleSignInResponse = async (result) => {
-    console.log('handleGoogleSignInResponse called');
-    console.log('Platform:', Platform.OS);
-    console.log('Result params:', result?.params);
-    console.log('Result authentication:', result?.authentication);
+    // console.log('handleGoogleSignInResponse called');
+    // console.log('Platform:', Platform.OS);
+    // console.log('Result params:', result?.params);
+    // console.log('Result authentication:', result?.authentication);
     
     // Try to get id_token from authentication or params
     let idToken = result?.params?.id_token || result?.authentication?.idToken;
-    console.log('ID Token found:', !!idToken);
+    // console.log('ID Token found:', !!idToken);
     
     // Try access token as fallback
     let accessToken = result?.params?.access_token || result?.authentication?.accessToken;
-    console.log('Access Token found:', !!accessToken);
+    // console.log('Access Token found:', !!accessToken);
     
     if (!idToken && !accessToken) {
       console.error('No id_token or access_token in response');
@@ -117,20 +117,20 @@ const LoginScreen = ({ navigation }) => {
     try {
       // If we have idToken, use it directly
       if (idToken) {
-        console.log('Creating credential with id_token...');
+        // console.log('Creating credential with id_token...');
         const credential = GoogleAuthProvider.credential(idToken);
         const authResult = await signInWithCredential(auth, credential);
-        console.log('Google Sign-In successful with id_token, user:', authResult.user?.uid);
+        // console.log('Google Sign-In successful with id_token, user:', authResult.user?.uid);
         setLoading(false);
         return;
       }
 
       // Fallback: use access token
       if (accessToken) {
-        console.log('Using access token for authentication...');
+        // console.log('Using access token for authentication...');
         const credential = GoogleAuthProvider.credential(null, accessToken);
         const authResult = await signInWithCredential(auth, credential);
-        console.log('Google Sign-In successful with access_token, user:', authResult.user?.uid);
+        // console.log('Google Sign-In successful with access_token, user:', authResult.user?.uid);
         setLoading(false);
         return;
       }
@@ -148,7 +148,7 @@ const LoginScreen = ({ navigation }) => {
    * Initiate Google Sign-In
    */
   const handleGoogleSignIn = async () => {
-    console.log('handleGoogleSignIn called, request ready:', !!request);
+    // console.log('handleGoogleSignIn called, request ready:', !!request);
     
     if (!request) {
       console.error('Google auth request not ready yet');
@@ -158,9 +158,9 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      console.log('Calling promptAsync()...');
+      // console.log('Calling promptAsync()...');
       const result = await promptAsync();
-      console.log('promptAsync result:', result);
+      // console.log('promptAsync result:', result);
       // Response is handled by useEffect hook
     } catch (error) {
       console.error('Google Sign-In promptAsync error:', error);
