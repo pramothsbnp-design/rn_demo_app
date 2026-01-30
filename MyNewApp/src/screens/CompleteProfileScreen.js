@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { db, auth } from '../firebase';
-import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs } from 'firebase/firestore';
 
 const CompleteProfileScreen = ({ navigation }) => {
   const { theme } = useTheme();
@@ -39,11 +39,44 @@ const CompleteProfileScreen = ({ navigation }) => {
   const [distanceDropdownOpen, setDistanceDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
+  
+  // State for dropdown options fetched from Firebase
+  const [batchOptions, setBatchOptions] = useState([]);
+  const [domicileOptions, setDomicileOptions] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [distanceOptions, setDistanceOptions] = useState(['Any Distance']);
 
-  const batchOptions = ['Alpha', 'Beta', 'Gamma', 'Omega', 'Achievers', 'Toppers'];
-  const domicileOptions = ['Andhra Pradesh', 'Karnataka', 'Kerala', 'Tamil Nadu', 'Telangana', 'Maharashtra', 'Delhi', 'Other'];
-  const categoryOptions = ['General', 'OBC', 'SC', 'ST'];
-  const distanceOptions = ['Any Distance', 'Within 100 km', 'Within 200 km', 'Within 500 km', 'Within State'];
+  // Fetch dropdown options from Firebase
+  useEffect(() => {
+    const fetchDropdownOptions = async () => {
+      try {
+        // Fetch batches
+        const batchesSnapshot = await getDocs(collection(db, 'batches'));
+        const batches = batchesSnapshot.docs.map(doc => doc.data().name || doc.id);
+        setBatchOptions(batches);
+
+        // Fetch domiciles
+        const domicilesSnapshot = await getDocs(collection(db, 'domiciles'));
+        const domiciles = domicilesSnapshot.docs.map(doc => doc.data().name || doc.id);
+        setDomicileOptions(domiciles);
+
+        // Fetch categories
+        const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+        const categories = categoriesSnapshot.docs.map(doc => doc.data().name || doc.id);
+        setCategoryOptions(categories);
+
+        // Fetch distances
+        const distancesSnapshot = await getDocs(collection(db, 'distances'));
+        const distances = distancesSnapshot.docs.map(doc => doc.data().name || doc.id);
+        setDistanceOptions(distances.length > 0 ? distances : ['Any Distance']);
+      } catch (error) {
+        console.error('Error fetching dropdown options:', error);
+        // Keep default values if fetch fails
+      }
+    };
+
+    fetchDropdownOptions();
+  }, []);
 
   // Fetch user profile on component mount
   useEffect(() => {
@@ -746,7 +779,7 @@ const CompleteProfileScreen = ({ navigation }) => {
                 style={styles.buttonSpacing}
               >
                 <LinearGradient
-                  colors={theme.dark ? ['#FF8A00', '#FF5F00'] : ['#FF9E24', '#FF8A00']}
+                  colors={['#fe6e32', '#fb8926']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={themedStyles.continueBtn}
@@ -763,9 +796,9 @@ const CompleteProfileScreen = ({ navigation }) => {
                   disabled={isLoading}
                 >
                   <LinearGradient
-                    colors={theme.dark ? ['#FF8A00', '#FF5F00'] : ['#FF9E24', '#FF8A00']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
+                    colors={['#fe6e32', '#fb8926']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
                     style={themedStyles.continueBtn}
                   >
                     {isLoading ? (

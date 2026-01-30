@@ -17,6 +17,7 @@ import NotificationBanner from '../components/NotificationBanner';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { designSystem } from '../styles/themeUtils';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { spacing } = designSystem;
 
@@ -287,6 +288,86 @@ const HomeScreen = ({ navigation }) => {
       marginTop: spacing.xs,
       color: theme.dark ? '#A8B5C2' : '#666',
     },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: spacing.lg,
+      minHeight: 500,
+    },
+    emptyIconWrapper: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      borderWidth: 3,
+      borderStyle: 'dashed',
+      borderColor: theme.dark ? '#4A5B6C' : '#DDD',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: spacing.lg,
+    },
+    emptyIcon: {
+      fontSize: 50,
+      color: '#FF8A00',
+    },
+    emptyTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: theme.colors.text,
+      marginBottom: spacing.sm,
+      textAlign: 'center',
+    },
+    emptySubtitle: {
+      fontSize: 14,
+      color: theme.dark ? '#A8B5C2' : '#666',
+      marginBottom: spacing.lg,
+      textAlign: 'center',
+      lineHeight: 20,
+      maxWidth: 280,
+    },
+    suggestionBox: {
+      backgroundColor: theme.dark ? '#34495e' : '#f4f8fd',
+      borderRadius: 12,
+      padding: spacing.md,
+      marginBottom: spacing.lg,
+      width: '100%',
+    },
+    suggestionItem: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: spacing.md,
+    },
+    suggestionTitle: {
+      fontSize: 13,
+      fontWeight: '800',
+      fontStyle:'bold',
+      color: theme.dark ? '#A8B5C2' : '#666',
+      marginLeft: spacing.md,
+      flex: 1,
+      lineHeight: 18,
+    },
+    suggestionItemLast: {
+      marginBottom: 0,
+    },
+    suggestionText: {
+      fontSize: 13,
+      color: theme.dark ? '#A8B5C2' : '#666',
+      marginLeft: spacing.md,
+      flex: 1,
+      lineHeight: 18,
+    },
+    updateButton: {
+      paddingVertical: 14,
+      paddingHorizontal: spacing.lg,
+      borderRadius: 8,
+      alignItems: 'center',
+      width: '100%',
+    },
+    updateButtonText: {
+      color: '#FFF',
+      fontSize: 16,
+      fontWeight: '600',
+    },
   });
 
   // Main render function
@@ -334,8 +415,53 @@ const HomeScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         onEndReached={loadMoreProducts}
         onEndReachedThreshold={0.5}
-        contentContainerStyle={{ paddingHorizontal: spacing.md }}
+        contentContainerStyle={{ paddingHorizontal: spacing.md, flexGrow: 1 }}
         ListFooterComponent={loading ? <View style={globalStyles.loaderContainer}><Text style={globalStyles.body}>Loading...</Text></View> : null}
+        ListEmptyComponent={
+          !loading ? (
+            <View style={localStyles.emptyContainer}>
+              <View style={localStyles.emptyIconWrapper}>
+                <Text style={localStyles.emptyIcon}>✓</Text>
+              </View>
+              <Text style={localStyles.emptyTitle}>No Colleges Found</Text>
+              <Text style={localStyles.emptySubtitle}>
+                We couldn't find any colleges matching your current profile and filters.
+              </Text>
+              
+              <View style={localStyles.suggestionBox}>
+                <View style={localStyles.suggestionItem}>
+                  <Text style={localStyles.suggestionTitle}>Try these options:</Text>
+                </View> 
+                <View style={localStyles.suggestionItem}>
+                  <Ionicons name="timer" size={18} color="#FF8A00" />
+                  <Text style={localStyles.suggestionText}>Adjust your expected score range</Text>
+                </View>
+                <View style={localStyles.suggestionItem}>
+                  <Ionicons name="layers" size={18} color="#FF8A00" />
+                  <Text style={localStyles.suggestionText}>Change your domicile or category</Text>
+                </View>
+                <View style={[localStyles.suggestionItem, localStyles.suggestionItemLast]}>
+                  <Ionicons name="filter" size={18} color="#FF8A00" />
+                  <Text style={localStyles.suggestionText}>Remove some filter selections</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={localStyles.updateButton}
+                onPress={() => navigation.navigate('CompleteProfile')}
+              >
+                <LinearGradient
+                  colors={['#fe6e32', '#fb8926']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={localStyles.updateButton}
+                >
+                <Text style={localStyles.updateButtonText}>Update My Profile</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          ) : null
+        }
       />
       {/* Footer Navigation */}
       <View style={localStyles.footer}>
@@ -381,7 +507,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={localStyles.filterContainer}>
               <View style={localStyles.filterSection}>
                 <Text style={localStyles.filterLabel}>Category:</Text>
-                {['All', 'Smartphones', 'laptops', 'mobile accessories', 'home appliances'].map(category => (
+                {['All', 'Smartphones', 'laptops', 'mobile accessories', 'home appliances','blank'].map(category => (
                   <TouchableOpacity
                     key={category}
                     onPress={() => setSelectedCategory(category)}
