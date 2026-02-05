@@ -43,40 +43,95 @@ A React Native Expo application featuring a product catalog with Firebase integr
    npm start
    ```
 
-## Running the App
+# MyNewApp
 
-- **iOS**: `npm run ios` (requires Xcode and iOS Simulator)
-- **Android**: `npm run android` (requires Android Studio and emulator)
-- **Web**: `npm run web`
-- **Expo Go**: Scan QR code with Expo Go app on your device
+A React Native Expo application showcasing a product catalog with Firebase integration, user authentication, and a light/dark theme toggle.
+
+## Quick Start
+
+Prerequisites:
+- Node.js (v14+)
+- npm or yarn
+- Expo CLI (`npm install -g expo-cli`)
+- A Firebase project (Auth + Firestore enabled)
+
+Install dependencies and start the dev server:
+
+```bash
+npm install
+npm run start
+```
+
+Common scripts:
+
+- `npm run start` — Start Expo dev server
+- `npm run ios` — Run on iOS simulator (macOS + Xcode required)
+- `npm run android` — Run on Android emulator
+- `npm run web` — Run in web browser
+- `npm test` — Run Jest tests
+
+## Firebase Setup
+
+1. Create a project at https://console.firebase.google.com/
+2. Enable **Authentication** (Email/Password) and **Firestore**
+3. Copy your Firebase config and export it from `src/firebase.js`. Example:
+
+```js
+// src/firebase.js
+import { initializeApp } from 'firebase/app';
+const firebaseConfig = {
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'YOUR_AUTH_DOMAIN',
+  projectId: 'YOUR_PROJECT_ID',
+  // ...other keys
+};
+export default initializeApp(firebaseConfig);
+```
+
+Note: Do not commit secrets — use environment variables or a secrets manager for production.
+
+## Features
+
+- User authentication (Firebase Auth)
+- Product catalog with pagination and filters
+- Theme toggle (light / dark) via Context API
+- Navigation: stack + drawer
+
+## Testing
+
+Unit tests use Jest and React Native Testing Library. Run:
+
+```bash
+npm test
+```
 
 ## Project Structure
 
 ```
 MyNewApp/
-├── assets/                 # Static assets (images, icons)
+├── App.js
+├── app.json
+├── index.js
+├── assets/            # Images and icons
 ├── src/
-│   ├── api/               # API functions (Firebase queries)
-│   ├── components/        # Reusable UI components
-│   ├── context/           # React Context for state management
-│   ├── firebase.js        # Firebase configuration
-│   ├── navigation/        # Navigation setup
-│   └── screens/           # App screens
-├── App.js                 # Main app component
-├── app.json               # Expo configuration
-├── index.js               # Entry point
-└── package.json           # Dependencies and scripts
+│   ├── api/           # API wrappers (productsApi)
+│   ├── components/    # Reusable components (ProductCard, Loader)
+│   ├── context/       # ThemeContext
+│   ├── navigation/    # App navigators
+│   ├── screens/       # Screen components
+│   └── firebase.js    # Firebase initialization (local)
+├── __tests__/         # Jest tests
+└── package.json
 ```
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Fork the repo
+2. Create a branch: `git checkout -b feature/your-feature`
+3. Commit, push, and open a PR
+
+Please follow the existing code style and add tests for new logic.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.</content>
-<parameter name="filePath">/workspaces/expodemo/MyNewApp/README.md
+MIT — see the `LICENSE` file for details.

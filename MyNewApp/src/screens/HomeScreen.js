@@ -4,15 +4,15 @@ import {
   View,
   Text,
   FlatList,
-  Image,
   TouchableOpacity,
   Modal,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme, useStyles } from '../context/ThemeContext';
-import { fetchProducts, subscribeToNewProducts } from '../api/productsApi';
+import { fetchColleges, subscribeToNewColleges, fetchUserProfile, filterCollegesByProfile } from '../api/collegesApi';
 import NotificationBanner from '../components/NotificationBanner';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -25,27 +25,27 @@ const HomeScreen = ({ navigation }) => {
   // Theme context for light/dark mode
   const { theme, toggleTheme } = useTheme();
   const globalStyles = useStyles();
-  // Array of products fetched from Firebase
-  const [products, setProducts] = useState([]);
-  // Sorting option: 'asc', 'desc', or null
-  const [sortBy, setSortBy] = useState(null);
-  // Selected category filter: 'All' or specific category
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  // Visibility state for sort/filter modal
+  // Array of colleges fetched from Firebase
+  const [colleges, setColleges] = useState([]);
+  // User profile data (contains score range and category)
+  const [userProfile, setUserProfile] = useState(null);
+  // Selected type filter: 'All', 'GOVT', or 'PRIVATE'
+  const [selectedType, setSelectedType] = useState('All');
+  // Visibility state for filter modal
   const [modalVisible, setModalVisible] = useState(false);
   // Last document reference for pagination
   const [lastDoc, setLastDoc] = useState(null);
   // Loading state for data fetching
   const [loading, setLoading] = useState(false);
-  // Flag to indicate if more products are available for pagination
+  // Flag to indicate if more colleges are available for pagination
   const [hasMore, setHasMore] = useState(true);
   // Notification state
   const [notification, setNotification] = useState({
     visible: false,
     message: '',
     type: 'success',
-    productTitle: '',
-    productPrice: '',
+    collegeName: '',
+    collegeState: '',
   });
 
   // Logout function
@@ -61,182 +61,199 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  // Fetch products
+  // Fetch colleges
   /**
-   * Fetches initial set of products from Firebase and handles empty collection
+   * Fetches initial set of colleges from Firestore
    * @async
    */
-  const loadProducts = async () => {
+  const loadColleges = async () => {
     setLoading(true);
     try {
-      const data = await fetchProducts(15);
-      setProducts(data.products);
+      const data = await fetchColleges(15, null, selectedType);
+      // Filter colleges based on user profile (score range and category)
+      const filteredColleges = filterCollegesByProfile(data.colleges, userProfile);
+      setColleges(filteredColleges);
       setLastDoc(data.lastDoc);
-      setHasMore(data.products.length === 15);
-
-      // If no products, add sample data
-      if (data.products.length === 0) {
-        console.log('No products found, adding sample data...');
-        await addSampleDataIfEmpty();
-      }
+      setHasMore(data.colleges.length === 15);
     } catch (error) {
-      console.log('Error fetching products:', error);
+      console.log('Error fetching colleges:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load more products
+  // Load more colleges
   /**
-   * Loads additional products for pagination with a delay for better UX
+   * Loads additional colleges for pagination with a delay for better UX
    * @async
    */
-  const loadMoreProducts = async () => {
+  const loadMoreColleges = async () => {
     if (!hasMore || loading) return;
     setLoading(true);
     try {
-      const data = await fetchProducts(15, lastDoc);
+      const data = await fetchColleges(15, lastDoc, selectedType);
+      // Filter the new colleges based on user profile
+      const filteredNewColleges = filterCollegesByProfile(data.colleges, userProfile);
       // Add a 0.5 second delay before showing new items
       setTimeout(() => {
-        setProducts(prev => {
-          const combined = [...prev, ...data.products];
+        setColleges(prev => {
+          const combined = [...prev, ...filteredNewColleges];
           const unique = Array.from(
           new Map(combined.map(item => [item.docId, item])).values()
         );
   return unique;
 });
         setLastDoc(data.lastDoc);
-        setHasMore(data.products.length === 15);
+        setHasMore(data.colleges.length === 15);
         setLoading(false);
       }, 500);
     } catch (error) {
-      console.log('Error fetching more products:', error);
+      console.log('Error fetching more colleges:', error);
       setLoading(false);
     }
   };
 
-  // Render single product
+  // Render single college
   /**
-   * Renders a single product item in the FlatList
-   * @param {Object} item - Product object with title, price, thumbnail, etc.
-   * @returns {JSX.Element} Touchable product card
+   * Renders a single college item in the FlatList
+   * @param {Object} item - College object with name, state, course, etc.
+   * @returns {JSX.Element} Touchable college card
    */
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={globalStyles.productCard}
-      onPress={() => navigation.navigate('Detail', { product: item })}
-    >
-      <Image source={{ uri: item.thumbnail }} style={globalStyles.productImage} />
-      <View style={globalStyles.productInfo}>
-        <Text style={globalStyles.productTitle}>{item.title}</Text>
-        <Text style={globalStyles.productPrice}>₹ {item.price}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  
+  // Calculate match percentage based on user profile and college cutoff
+  const calculateMatchPercentage = (college) => {
+    if (!userProfile || !college.cutoff) return null;
+    
+    const { expectedScoreFrom, expectedScoreTo, category } = userProfile;
+    const categoryKey = category ? category.toLowerCase() : 'general';
+    const cutoffScore = college.cutoff[categoryKey] || college.cutoff.general;
+    
+    if (!cutoffScore || !expectedScoreFrom || !expectedScoreTo) return null;
+    
+    const scoreFrom = parseInt(expectedScoreFrom, 10);
+    const scoreTo = parseInt(expectedScoreTo, 10);
+    const cutoff = parseInt(cutoffScore, 10);
+    
+    if (isNaN(scoreFrom) || isNaN(scoreTo) || isNaN(cutoff)) return null;
+    
+    const scoreRange = scoreTo - scoreFrom;
+    if (scoreRange === 0) return 100; // Perfect match if single score
+    
+    // Calculate how well the cutoff fits in the score range
+    // 100% if cutoff is at center, lower if at edges
+    const centerScore = (scoreFrom + scoreTo) / 2;
+    const distance = Math.abs(cutoff - centerScore);
+    const maxDistance = scoreRange / 2;
+    
+    const matchPercentage = Math.max(0, 100 - (distance / maxDistance) * 100);
+    return Math.round(matchPercentage);
+  };
 
-  // Load products on component mount
+  const renderItem = ({ item }) => {
+    const matchPercentage = calculateMatchPercentage(item);
+    
+    return (
+      <TouchableOpacity
+        style={globalStyles.collegeCard}
+        onPress={() => navigation.navigate('Detail', { college: item })}
+      >
+        <View style={globalStyles.collegeHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={globalStyles.collegeName}>{item.name}</Text>
+            <Text style={globalStyles.collegeState}>{item.state}, {item.course}</Text>
+          </View>
+          <View style={[globalStyles.typeTag, { backgroundColor: item.type === 'GOVT' ? '#27AE60' : '#E67E22' }]}>
+            <Text style={globalStyles.typeTagText}>{item.type}</Text>
+          </View>
+        </View>
+        {item.cutoff && (
+          <View style={globalStyles.cutoffContainer}>
+            <View style={globalStyles.cutoffItem}>
+              <Text style={globalStyles.cutoffLabel}>General</Text>
+              <Text style={globalStyles.cutoffValue}>{item.cutoff.general || 'N/A'}</Text>
+            </View>
+            <View style={globalStyles.cutoffItem}>
+              <Text style={globalStyles.cutoffLabel}>OBC</Text>
+              <Text style={globalStyles.cutoffValue}>{item.cutoff.obc || 'N/A'}</Text>
+            </View>
+            <View style={globalStyles.cutoffItem}>
+              <Text style={globalStyles.cutoffLabel}>SC</Text>
+              <Text style={globalStyles.cutoffValue}>{item.cutoff.sc || 'N/A'}</Text>
+            </View>
+          </View>
+        )}
+        {matchPercentage !== null && (
+          <View style={{ paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: '#27AE60' }}>
+              {matchPercentage}% Match
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  // Load colleges on component mount
   useEffect(() => {
-    loadProducts();
+    // Fetch user profile first, then load colleges
+    const initializeScreen = async () => {
+      const profile = await fetchUserProfile();
+      setUserProfile(profile);
+      // Load colleges will use the profile state in the next effect
+    };
 
-    // Set up real-time listener for new products
-    const unsubscribe = subscribeToNewProducts((newProduct) => {
-      // Show in-app notification when a new product is added
-      setNotification({
-        visible: true,
-        message: '✨ New Product Added!',
-        type: 'success',
-        productTitle: newProduct.title,
-        productPrice: newProduct.price,
-      });
+    initializeScreen();
 
-      // Auto-add to the products list
-      setProducts(prev => {
-        const exists = prev.find(p => p.docId === newProduct.docId);
-        if (!exists) {
-          return [newProduct, ...prev];
-        }
-        return prev;
-      });
+    // Set up real-time listener for new colleges
+    const unsubscribe = subscribeToNewColleges((newCollege) => {
+      // Filter the new college based on user profile
+      const filteredCollege = filterCollegesByProfile([newCollege], userProfile);
+      
+      if (filteredCollege.length > 0) {
+        // Show in-app notification when a new eligible college is added
+        setNotification({
+          visible: true,
+          message: '✨ New College Added!',
+          type: 'success',
+          collegeName: newCollege.name,
+          collegeState: newCollege.state,
+        });
+
+        // Auto-add to the colleges list
+        setColleges(prev => {
+          const exists = prev.find(c => c.docId === newCollege.docId);
+          if (!exists) {
+            return [newCollege, ...prev];
+          }
+          return prev;
+        });
+      }
     });
 
     // Cleanup: unsubscribe from listener when component unmounts
     return () => unsubscribe();
   }, []);
 
-  // Reload products when category filter changes
+  // Load colleges when user profile or type filter changes
   useEffect(() => {
-    if (selectedCategory !== 'All') {
-      loadProducts();
+    if (userProfile !== null) {
+      // Profile has been fetched (even if null), load colleges
+      loadColleges();
     }
-  }, [selectedCategory]);
+  }, [userProfile, selectedType]);
 
-  // Add sample data if collection is empty
-  /**
-   * Adds sample product data to Firestore if the products collection is empty
-   * @async
-   */
-  const addSampleDataIfEmpty = async () => {
-    try {
-      const sampleProducts = [
-        {
-          id: 1,
-          title: 'iPhone 15 Pro',
-          price: 999,
-          thumbnail: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400',
-          description: 'Latest iPhone with advanced features',
-          category: 'Smartphones'
-        },
-        {
-          id: 2,
-          title: 'MacBook Air M3',
-          price: 1099,
-          thumbnail: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400',
-          description: 'Powerful laptop for professionals',
-          category: 'laptops'
-        },
-        {
-          id: 3,
-          title: 'AirPods Pro',
-          price: 8000,
-          thumbnail: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/AirPods_Pro_%282nd_generation%29.jpg',
-          description: 'Wireless earbuds with noise cancellation',
-          category: 'mobile accessories'
-        }
-      ];
-
-      console.log('Adding sample products...');
-      for (const product of sampleProducts) {
-        await addDoc(collection(db, 'products'), product);
-        console.log(`Added product: ${product.title}`);
-      }
-      console.log('Sample products added successfully!');
-
-      // Reload products after adding
-      loadProducts();
-    } catch (error) {
-      console.error('Error adding sample products:', error);
-    }
-  };
-
-  // Filtered and sorted products
-  /**
-   * Memoized computation of filtered and sorted products based on current filters
-   * @returns {Array} Filtered and sorted array of products
-   */
-  const filteredProducts = useMemo(() => {
-    let filtered = products;
-    // Apply category filter
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(item => item.category === selectedCategory);
-    }
-    // Apply price sorting
-    if (sortBy === 'asc') {
-      filtered = [...filtered].sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'desc') {
-      filtered = [...filtered].sort((a, b) => b.price - a.price);
-    }
-    return filtered;
-  }, [products, sortBy, selectedCategory]);
+  // Refetch user profile whenever HomeScreen comes into focus
+  // This ensures that updated profile data is used to filter colleges
+  useFocusEffect(
+    React.useCallback(() => {
+      const refreshProfile = async () => {
+        const updatedProfile = await fetchUserProfile();
+        setUserProfile(updatedProfile);
+      };
+      
+      refreshProfile();
+    }, [])
+  );
 
   // Styles for the HomeScreen component
   const localStyles = StyleSheet.create({
@@ -409,11 +426,11 @@ const HomeScreen = ({ navigation }) => {
       </View>
       {/* Product list with infinite scroll */}
       <FlatList
-        data={filteredProducts}
+        data={colleges}
         keyExtractor={item => item.docId}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-        onEndReached={loadMoreProducts}
+        onEndReached={loadMoreColleges}
         onEndReachedThreshold={0.5}
         contentContainerStyle={{ paddingHorizontal: spacing.md, flexGrow: 1 }}
         ListFooterComponent={loading ? <View style={globalStyles.loaderContainer}><Text style={globalStyles.body}>Loading...</Text></View> : null}
@@ -425,7 +442,7 @@ const HomeScreen = ({ navigation }) => {
               </View>
               <Text style={localStyles.emptyTitle}>No Colleges Found</Text>
               <Text style={localStyles.emptySubtitle}>
-                We couldn't find any colleges matching your current profile and filters.
+                We couldn't find any colleges matching your current filters.
               </Text>
               
               <View style={localStyles.suggestionBox}>
@@ -434,15 +451,15 @@ const HomeScreen = ({ navigation }) => {
                 </View> 
                 <View style={localStyles.suggestionItem}>
                   <Ionicons name="timer" size={18} color="#FF8A00" />
-                  <Text style={localStyles.suggestionText}>Adjust your expected score range</Text>
+                  <Text style={localStyles.suggestionText}>Adjust college type filter</Text>
                 </View>
                 <View style={localStyles.suggestionItem}>
                   <Ionicons name="layers" size={18} color="#FF8A00" />
-                  <Text style={localStyles.suggestionText}>Change your domicile or category</Text>
+                  <Text style={localStyles.suggestionText}>Browse all colleges</Text>
                 </View>
                 <View style={[localStyles.suggestionItem, localStyles.suggestionItemLast]}>
                   <Ionicons name="filter" size={18} color="#FF8A00" />
-                  <Text style={localStyles.suggestionText}>Remove some filter selections</Text>
+                  <Text style={localStyles.suggestionText}>Clear all filters</Text>
                 </View>
               </View>
 
@@ -506,40 +523,22 @@ const HomeScreen = ({ navigation }) => {
             <Text style={globalStyles.heading2}>Filters</Text>
             <View style={localStyles.filterContainer}>
               <View style={localStyles.filterSection}>
-                <Text style={localStyles.filterLabel}>Category:</Text>
-                {['All', 'Smartphones', 'laptops', 'mobile accessories', 'home appliances','blank'].map(category => (
+                <Text style={localStyles.filterLabel}>College Type:</Text>
+                {['All', 'GOVT', 'PRIVATE'].map(type => (
                   <TouchableOpacity
-                    key={category}
-                    onPress={() => setSelectedCategory(category)}
+                    key={type}
+                    onPress={() => {
+                      setSelectedType(type);
+                      setModalVisible(false);
+                    }}
                     style={localStyles.checkboxContainer}
                   >
                     <Ionicons
-                      name={selectedCategory === category ? 'checkmark-circle' : 'radio-button-off'}
+                      name={selectedType === type ? 'checkmark-circle' : 'radio-button-off'}
                       size={20}
                       color={theme.colors.primary}
                     />
-                    <Text style={localStyles.checkboxText}>{category}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <View style={localStyles.filterSection}>
-                <Text style={localStyles.filterLabel}>Sort by Price:</Text>
-                {[
-                  { label: 'None', value: null },
-                  { label: 'Low to High', value: 'asc' },
-                  { label: 'High to Low', value: 'desc' }
-                ].map(item => (
-                  <TouchableOpacity
-                    key={item.value}
-                    onPress={() => setSortBy(item.value)}
-                    style={localStyles.checkboxContainer}
-                  >
-                    <Ionicons
-                      name={sortBy === item.value ? 'checkmark-circle' : 'radio-button-off'}
-                      size={20}
-                      color={theme.colors.primary}
-                    />
-                    <Text style={localStyles.checkboxText}>{item.label}</Text>
+                    <Text style={localStyles.checkboxText}>{type}</Text>
                   </TouchableOpacity>
                 ))}
               </View>

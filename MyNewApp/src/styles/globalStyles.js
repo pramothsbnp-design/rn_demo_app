@@ -368,7 +368,7 @@ export const createGlobalStyles = (theme) => {
       justifyContent: 'space-between',
     },
 
-    // Product card styles
+    // Product card styles (Legacy)
     productCard: {
       backgroundColor: theme.colors.card,
       borderRadius: borderRadius.lg,
@@ -400,6 +400,83 @@ export const createGlobalStyles = (theme) => {
       fontWeight: fontWeights.bold,
       color: theme.colors.text,
       marginBottom: spacing.sm,
+    },
+
+    // College card styles
+    collegeCard: {
+      backgroundColor: theme.colors.card,
+      borderRadius: borderRadius.lg,
+      overflow: 'hidden',
+      marginHorizontal: spacing.sm,
+      marginVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      borderWidth: 1,
+      borderColor: theme.dark ? '#3A4B5C' : '#E0E6ED',
+      ...shadows.small,
+    },
+
+    collegeHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: spacing.md,
+    },
+
+    collegeName: {
+      fontSize: fontSizes.lg,
+      fontWeight: fontWeights.bold,
+      color: theme.colors.text,
+      marginBottom: spacing.xs,
+      flex: 1,
+    },
+
+    collegeState: {
+      fontSize: fontSizes.sm,
+      fontWeight: fontWeights.regular,
+      color: theme.dark ? '#A8B5C2' : '#666',
+    },
+
+    typeTag: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      borderRadius: borderRadius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    typeTagText: {
+      fontSize: fontSizes.xs,
+      fontWeight: fontWeights.bold,
+      color: '#FFF',
+    },
+
+    cutoffContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+
+    cutoffItem: {
+      flex: 1,
+      marginHorizontal: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.sm,
+      backgroundColor: theme.dark ? '#2A3F52' : '#F5F7FA',
+      borderRadius: borderRadius.md,
+      alignItems: 'center',
+    },
+
+    cutoffLabel: {
+      fontSize: fontSizes.xs,
+      fontWeight: fontWeights.medium,
+      color: theme.dark ? '#A8B5C2' : '#666',
+      marginBottom: spacing.xs,
+    },
+
+    cutoffValue: {
+      fontSize: fontSizes.lg,
+      fontWeight: fontWeights.bold,
+      color: '#fe6e32',
     },
 
     // Loader styles

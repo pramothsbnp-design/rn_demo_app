@@ -170,7 +170,16 @@ const CompleteProfileScreen = ({ navigation }) => {
       await setDoc(doc(db, 'userProfiles', currentUser.uid), profileData);
 
       Alert.alert('Success', 'Profile updated successfully!');
-      navigation.navigate('Home');
+      
+      // Navigate back or to home based on where we came from
+      // If we came from onboarding, navigate to HomeAfterProfile
+      // If we came from home, just go back
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        // Fallback: navigate to HomeAfterProfile for onboarding flow
+        navigation.replace('HomeAfterProfile');
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
       Alert.alert('Error', 'Failed to save profile. Please try again.');
