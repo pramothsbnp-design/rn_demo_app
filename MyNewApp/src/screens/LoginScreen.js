@@ -17,6 +17,7 @@ import * as Google from 'expo-auth-session/providers/google';
 import Constants from 'expo-constants';
 import { signInWithEmailAndPassword, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import { auth, GOOGLE_SIGN_IN_KEY, GOOGLE_SIGN_IN_IOS_KEY, GOOGLE_SIGN_IN_ANDROID_KEY } from '../firebase';
+import { useTheme } from '../context/ThemeContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -169,14 +170,42 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
+  const SocialButton = ({ icon, onPress, disabled }) => {
+    const logoMap = {
+      'logo-google': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/500px-Google_%22G%22_logo.svg.png',
+      'logo-facebook': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/1200px-Facebook_Logo_%282019%29.png',
+      'logo-apple': null,
+    };
+
+    if (icon === 'logo-apple') {
+      return (
+        <TouchableOpacity style={styles.socialBtn} onPress={onPress} disabled={disabled}>
+          <Ionicons name={icon} size={22} color={theme.colors.text} />
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <TouchableOpacity style={styles.socialBtn} onPress={onPress} disabled={disabled}>
+        <Image 
+          source={{ uri: logoMap[icon] }} 
+          style={{ width: 24, height: 24, resizeMode: 'contain' }}
+        />
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <LinearGradient
-      colors={['#36475a', '#36475a']}
+      colors={[theme.colors.background, theme.dark ? '#2d3e50' : '#fbfdfe']}
       style={styles.container}
     >
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#FF8A00" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       )}
       
@@ -191,7 +220,7 @@ const LoginScreen = ({ navigation }) => {
         <Text style={styles.label}>Email ID</Text>
         <TextInput
           placeholder="you@example.com"
-          placeholderTextColor="#8FA1B2"
+          placeholderTextColor={theme.colors.softtext}
           style={styles.input}
           value={email}
           onChangeText={setEmail}
@@ -205,7 +234,7 @@ const LoginScreen = ({ navigation }) => {
         <View style={styles.passwordBox}>
           <TextInput
             placeholder="Enter your password"
-            placeholderTextColor="#8FA1B2"
+            placeholderTextColor={theme.colors.softtext}
             secureTextEntry={!showPassword}
             style={styles.passwordInput}
             value={password}
@@ -216,7 +245,7 @@ const LoginScreen = ({ navigation }) => {
   <Ionicons
     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
     size={18}
-    color="#8FA1B2"
+    color={theme.colors.softtext}
   />
 </TouchableOpacity>
 
@@ -224,8 +253,8 @@ const LoginScreen = ({ navigation }) => {
 
         {/* Sign In */}
         <TouchableOpacity activeOpacity={0.8} onPress={handleLogin} disabled={loading}>
-          <LinearGradient
-            colors={['#FF8A00', '#FF5F00']}
+            <LinearGradient
+            colors={[theme.colors.primary, theme.colors.notification || '#FF5F00']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.signInBtn, loading && styles.disabledBtn]}
@@ -261,76 +290,53 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
-const SocialButton = ({ icon, onPress, disabled }) => {
-  const logoMap = {
-    'logo-google': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/500px-Google_%22G%22_logo.svg.png',
-    'logo-facebook': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/1200px-Facebook_Logo_%282019%29.png',
-    'logo-apple': null, // Keep apple as icon
-  };
-
-  if (icon === 'logo-apple') {
-    return (
-      <TouchableOpacity style={styles.socialBtn} onPress={onPress} disabled={disabled}>
-        <Ionicons name={icon} size={22} color="#ffffff" />
-      </TouchableOpacity>
-    );
-  }
-
-  return (
-    <TouchableOpacity style={styles.socialBtn} onPress={onPress} disabled={disabled}>
-      <Image 
-        source={{ uri: logoMap[icon] }} 
-        style={{ width: 24, height: 24, resizeMode: 'contain' }}
-      />
-    </TouchableOpacity>
-  );
-};
+  
 
 export default LoginScreen;
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#334656',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     padding: 16,
   },
 
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(14, 26, 36, 0.8)',
+    backgroundColor: theme.dark ? 'rgba(14,26,36,0.8)' : 'rgba(255,255,255,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
   },
 
   card: {
-    backgroundColor: '#1E2C39',
+    backgroundColor: theme.colors.card,
     borderRadius: 26,
     padding: 24,
   },
 
   title: {
-    color: '#fff',
+    color: theme.colors.text,
     fontSize: 26,
     fontWeight: '700',
   },
 
   brand: {
-    color: '#fff',
+    color: theme.colors.text,
     fontSize: 30,
     fontWeight: '800',
     marginBottom: 4,
   },
 
   subtitle: {
-    color: '#8FA1B2',
+    color: theme.colors.text,
     fontSize: 13,
     marginBottom: 28,
   },
 
   label: {
-    color: '#8FA1B2',
+    color: theme.colors.text,
     fontSize: 12,
     marginBottom: 6,
   },
@@ -338,10 +344,12 @@ const styles = StyleSheet.create({
   input: {
     height: 48,
     borderRadius: 10,
-    backgroundColor: '#2B3A48',
+    backgroundColor: theme.dark ? '#34495e' : '#ffffff',
     paddingHorizontal: 14,
-    color: '#fff',
+    color: theme.colors.text,
     marginBottom: 18,
+    borderColor: theme.colors.border,
+    borderWidth: 0.5,
   },
 
   passwordBox: {
@@ -349,14 +357,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 48,
     borderRadius: 10,
-    backgroundColor: '#2B3A48',
+    backgroundColor: theme.dark ? '#34495e' : '#ffffff',
     paddingHorizontal: 14,
     marginBottom: 24,
+    borderColor: theme.colors.border,
+    borderWidth: 0.5,
   },
 
   passwordInput: {
     flex: 1,
-    color: '#fff',
+    color: theme.colors.text,
   },
 
   signInBtn: {
@@ -381,13 +391,13 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#7e92a7',
+    borderColor: theme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   createText: {
-    color: '#C5D2DE',
+    color: theme.colors.text,
     fontWeight: '600',
   },
 
@@ -400,11 +410,11 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: '#4c5e70',
+    backgroundColor: theme.dark ? '#4c5e70' : '#e6ecf0',
   },
 
   orText: {
-    color: '#8FA1B2',
+    color: theme.colors.border,
     marginHorizontal: 10,
     fontSize: 12,
   },
@@ -418,7 +428,9 @@ const styles = StyleSheet.create({
     width: 110,
     height: 52,
     borderRadius: 12,
-    backgroundColor: '#3f556b',
+    backgroundColor: theme.colors.card,
+    borderColor: theme.colors.border,
+    borderWidth: 0.5,
     justifyContent: 'center',
     alignItems: 'center',
   },

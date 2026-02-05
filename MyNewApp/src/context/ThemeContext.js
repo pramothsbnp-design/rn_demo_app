@@ -16,11 +16,17 @@ export const lightTheme = {
   dark: false,
   colors: {
     primary: '#f36e32',
-    background: '#efeded',
+    secondary: '#fb8926',
+    background: '#fbfdfe',
     card: '#ffffff',
     text: '#000000',
+    softtext: '#6f6e6e',
     border: '#C6C6C8',
     notification: '#f36e32',
+  },
+    gradients: {
+    main: ['#f36e32', '#fb8926'], // 👈 main app gradient
+    reverse: ['#fb8926', '#f36e32'], // 👈 reverse gradient
   },
   fonts: {
     regular: {
@@ -47,11 +53,17 @@ export const darkTheme = {
   dark: true,
   colors: {
     primary: '#f36e32',
+    secondary: '#fb8926',
     background: '#2d3e50',
     card: '#34495e',
     text: '#FFFFFF',
-    border: '#38383A',
+    softtext: '#d4d3d3',
+    border: '#5c5c5c',
     notification: '#f36e32',
+  },
+    gradients: {
+    main: ['#f36e32', '#fb8926'], // 👈 main app gradient
+    reverse: ['#fb8926', '#f36e32'], // 👈 reverse gradient
   },
   fonts: {
     regular: {

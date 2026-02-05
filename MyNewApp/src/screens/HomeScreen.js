@@ -151,44 +151,59 @@ const HomeScreen = ({ navigation }) => {
 
   const renderItem = ({ item }) => {
     const matchPercentage = calculateMatchPercentage(item);
+
+    // Determine category from user profile
+    const categoryKey = userProfile && userProfile.category 
+      ? userProfile.category.toLowerCase() 
+      : 'general';
     
+    // Get cutoff for the user's category
+    const cutoffValue = item.cutoff && (item.cutoff[categoryKey] || item.cutoff.general || 'N/A');
+    let cutoffDisplay = 'N/A';
+    if (cutoffValue && cutoffValue !== 'N/A') {
+      const parsed = parseInt(cutoffValue, 10);
+      cutoffDisplay = isNaN(parsed) ? cutoffValue : parsed.toLocaleString();
+    }
+
     return (
       <TouchableOpacity
-        style={globalStyles.collegeCard}
+        style={[globalStyles.collegeCard, localStyles.card]}
         onPress={() => navigation.navigate('Detail', { college: item })}
       >
-        <View style={globalStyles.collegeHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={globalStyles.collegeName}>{item.name}</Text>
-            <Text style={globalStyles.collegeState}>{item.state}, {item.course}</Text>
+        <View style={localStyles.cardHeader}>
+          <View style={localStyles.cardHeaderLeft}>
+            <View style={localStyles.iconCircle}>
+              <Ionicons name="home" size={18} color={theme.colors.primary} />
+            </View>
+            <View style={localStyles.cardHeaderText}>
+              <Text style={globalStyles.collegeName}>{item.name}</Text>
+              <Text style={globalStyles.collegeState}>{item.state}</Text>
+            </View>
           </View>
-          <View style={[globalStyles.typeTag, { backgroundColor: item.type === 'GOVT' ? '#27AE60' : '#E67E22' }]}>
+          <View style={[globalStyles.typeTag, localStyles.typeTagRight, { backgroundColor: item.type === 'GOVT' ? '#27AE60' : '#E67E22' }]}>
             <Text style={globalStyles.typeTagText}>{item.type}</Text>
           </View>
         </View>
-        {item.cutoff && (
-          <View style={globalStyles.cutoffContainer}>
-            <View style={globalStyles.cutoffItem}>
-              <Text style={globalStyles.cutoffLabel}>General</Text>
-              <Text style={globalStyles.cutoffValue}>{item.cutoff.general || 'N/A'}</Text>
-            </View>
-            <View style={globalStyles.cutoffItem}>
-              <Text style={globalStyles.cutoffLabel}>OBC</Text>
-              <Text style={globalStyles.cutoffValue}>{item.cutoff.obc || 'N/A'}</Text>
-            </View>
-            <View style={globalStyles.cutoffItem}>
-              <Text style={globalStyles.cutoffLabel}>SC</Text>
-              <Text style={globalStyles.cutoffValue}>{item.cutoff.sc || 'N/A'}</Text>
-            </View>
+
+        <View style={localStyles.midRow}>
+          <View style={localStyles.metaColumn}>
+            <Text style={localStyles.metaLabel}>Last Cutoff Rank</Text>
+            <Text style={localStyles.metaValue}>{cutoffDisplay}</Text>
           </View>
-        )}
-        {matchPercentage !== null && (
-          <View style={{ paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12 }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#27AE60' }}>
-              {matchPercentage}% Match
-            </Text>
+          <View style={localStyles.metaColumn}>
+            <Text style={localStyles.metaLabel}>Course</Text>
+            <Text style={localStyles.metaValue}>{item.course || 'N/A'}</Text>
           </View>
-        )}
+        </View>
+
+        <View style={localStyles.bottomRow}>
+          {matchPercentage !== null ? (
+            <Text style={localStyles.matchText}>{matchPercentage}% Match</Text>
+          ) : (
+            <View />
+          )}
+          <Ionicons name="chevron-forward" size={20} color={theme.dark ? '#A8B5C2' : '#BBB'} />
+        </View>
       </TouchableOpacity>
     );
   };
@@ -366,6 +381,78 @@ const HomeScreen = ({ navigation }) => {
     suggestionItemLast: {
       marginBottom: 0,
     },
+    card: {
+      padding: 14,
+      borderRadius: 12,
+      backgroundColor: theme.dark ? '#14202a' : '#FFFFFF',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.06,
+      shadowRadius: 6,
+      elevation: 3,
+      marginBottom: spacing.md,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.sm,
+    },
+    cardHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    iconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: '#FFEDE0',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: spacing.md,
+    },
+    cardHeaderText: {
+      flex: 1,
+    },
+    typeTagRight: {
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 14,
+    },
+    midRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: theme.dark ? '#203140' : '#F0F3F6',
+      marginTop: spacing.sm,
+    },
+    metaColumn: {
+      flex: 1,
+    },
+    metaLabel: {
+      fontSize: 12,
+      color: theme.dark ? '#93A4B6' : '#7A8897',
+      marginBottom: 6,
+    },
+    metaValue: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: theme.colors.text,
+    },
+    bottomRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingTop: spacing.sm,
+    },
+    matchText: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: '#27AE60',
+    },
+
     suggestionText: {
       fontSize: 13,
       color: theme.dark ? '#A8B5C2' : '#666',

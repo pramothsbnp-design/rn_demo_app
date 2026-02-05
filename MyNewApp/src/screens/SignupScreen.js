@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 
@@ -35,9 +36,12 @@ const SignupScreen = ({ navigation }) => {
     }
   };
 
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   return (
     <LinearGradient
-      colors={['#36475a', '#36475a']}
+      colors={[theme.colors.background, theme.dark ? '#2d3e50' : '#fbfdfe']}
       style={styles.container}
     >
       
@@ -51,7 +55,7 @@ const SignupScreen = ({ navigation }) => {
         <Text style={styles.label}>Email ID</Text>
         <TextInput
           placeholder="you@example.com"
-          placeholderTextColor="#8FA1B2"
+          placeholderTextColor={theme.colors.softtext}
           style={styles.input}
           value={email}
           onChangeText={setEmail}
@@ -64,7 +68,7 @@ const SignupScreen = ({ navigation }) => {
         <View style={styles.passwordBox}>
           <TextInput
             placeholder="Create a strong password"
-            placeholderTextColor="#8FA1B2"
+            placeholderTextColor={theme.colors.softtext}
             secureTextEntry={!showPassword}
             style={styles.passwordInput}
             value={password}
@@ -74,15 +78,15 @@ const SignupScreen = ({ navigation }) => {
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={18}
-              color="#8FA1B2"
+              color={theme.colors.softtext}
             />
           </TouchableOpacity>
         </View>
 
         {/* Sign Up */}
         <TouchableOpacity activeOpacity={0.8} onPress={handleSignup}>
-          <LinearGradient
-            colors={['#FF8A00', '#FF5F00']}
+            <LinearGradient
+            colors={[theme.colors.primary, theme.colors.notification || '#FF5F00']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.signUpBtn}
@@ -108,37 +112,35 @@ const SignupScreen = ({ navigation }) => {
 
 export default SignupScreen;
 
-/* ================== STYLES ================== */
-
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#36475a',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     padding: 16,
   },
 
   card: {
-    backgroundColor: '#1E2C39',
+    backgroundColor: theme.colors.card,
     borderRadius: 26,
     padding: 24,
   },
 
   brand: {
-    color: '#fff',
+    color: theme.colors.text,
     fontSize: 28,
     fontWeight: '800',
     marginBottom: 6,
   },
 
   subtitle: {
-    color: '#8FA1B2',
+    color: theme.colors.text,
     fontSize: 13,
     marginBottom: 28,
   },
 
   label: {
-    color: '#8FA1B2',
+    color: theme.colors.text,
     fontSize: 12,
     marginBottom: 6,
   },
@@ -146,10 +148,12 @@ const styles = StyleSheet.create({
   input: {
     height: 48,
     borderRadius: 10,
-    backgroundColor: '#2B3A48',
+    backgroundColor: theme.dark ? '#34495e' : '#ffffff',
     paddingHorizontal: 14,
-    color: '#fff',
+    color: theme.colors.text,
     marginBottom: 18,
+    borderColor: theme.colors.border,
+    borderWidth: 0.5,
   },
 
   passwordBox: {
@@ -157,14 +161,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 48,
     borderRadius: 10,
-    backgroundColor: '#2B3A48',
+    backgroundColor: theme.dark ? '#34495e' : '#ffffff',
     paddingHorizontal: 14,
     marginBottom: 24,
+    borderColor: theme.colors.border,
+    borderWidth: 0.5,
   },
 
   passwordInput: {
     flex: 1,
-    color: '#fff',
+    color: theme.colors.text,
   },
 
   signUpBtn: {
@@ -186,12 +192,12 @@ const styles = StyleSheet.create({
   },
 
   loginText: {
-    color: '#8FA1B2',
+    color: theme.colors.text,
     fontSize: 13,
   },
 
   loginHighlight: {
-    color: '#FF8A00',
+    color: theme.colors.primary,
     fontWeight: '700',
   },
 });
